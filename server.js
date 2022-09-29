@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-var morgan = require('morgan');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const corsOptions = require('./config/corsOptions');
 
+const verifyJWT = require('./middleware/verifyJWT');
 const errorHandler = require('./middleware/errorHandler');
 const PORT = process.env.PORT || 3500;
 
@@ -15,27 +18,33 @@ app.use(morgan('combined'));
  */
 app.use(express.urlencoded({ extended: false }));
 
-const whitelist = ['http://127.0.0.1:3000', 'http://127.0.0.1:5500'];
-const corsOptions = {
-  origin: (origin, callback) => {
-    // dev mode has no origin
-    if (whitelist.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Prevented by CORS'));
-    }
-  },
-  optionsSuccessStatus: 200,
-};
 app.use(cors(corsOptions));
 
 // Built-in middleware for json data
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve static files middleware
-app.use(express.static(path.join(__dirname, '/public')));
+// __dirname current directory path of this file
+// default dir for static is "/". If we need subdir statics, we need to add that route
+app.use('/', express.static(path.join(__dirname, '/public')));
 
-app.get('/', (req, res) => {});
+app.use('/', require('./routes/index'));
+app.use('/register', require('./routes/api/register'));
+app.use('/auth', require('./routes/api/auth'));
+app.use('/refresh', require('./routes/api/refresh'));
+app.use('/logout', require('./routes/api/logout'));
+
+/**
+ * This works as waterfall. Previous routes won't be protected by verify token middleware
+ * because they are public or necessary routes. Every route below this middleware will be
+ * protected
+ * */
+app.use(verifyJWT);
+
+app.use('/employees', require('./routes/api/employees'));
+
+// app.get('/', (req, res) => {});
 
 app.all('*', (req, res) => {
   res
