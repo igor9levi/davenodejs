@@ -26,9 +26,11 @@ const handleLogin = async (req, res) => {
   const match = await bcrypt.compare(password, foundUser.password);
 
   if (match) {
+    const roles = Object.values(foundUser.roles);
+
     // TODO: Create JWTa (AT & RT)
     const accessToken = jwt.sign(
-      { username: foundUser.username },
+      { userInfo: { username: foundUser.username, roles } },
       process.env.ACCESS_TOKEN,
       { expiresIn: '30s' }
     );
@@ -47,7 +49,11 @@ const handleLogin = async (req, res) => {
     res.cookie('jwt', refreshToken, {
       httpOnly: true,
       maxAge: 15 * 60 * 1000, // 15min in ms;
-      secure: true, // On production also add secure: true to be able to send via https
+      /**
+       * On production also add secure: true to be able to send via https
+       * Required by Chrome and for PROD, may create issues with testing refresh API with Thunderclient
+       */
+      secure: true,
       sameSite: 'None', // For httpOnly cookie to be accepted by CORS, since FE is usually served from other domain
     });
     res.json({ accessToken });
