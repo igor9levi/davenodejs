@@ -1,4 +1,4 @@
-const { usersDB } = require('./authController');
+const usersDB = require('../db/users');
 
 const handleLogout = (req, res) => {
   // TODO: on client delete AT

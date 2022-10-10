@@ -1,26 +1,6 @@
 const bcrypt = require('bcrypt');
 
-const usersDB = {
-  users: [
-    {
-      id: 1,
-      username: 'davegray',
-      name: 'Dave',
-      lastName: 'Gray',
-      password: '$2b$10$K7TXAvlcThWumUKkZjwm3eAyOkO6X4GNkHrmdiQuePail7koQS0Nq', // l
-    },
-    {
-      id: 2,
-      username: 'levi9',
-      name: 'Levi',
-      lastName: 'Desni',
-      password: '$2b$10$UABOEH./FwTAbbYyu5YlhOOAJk9iuZaZPXsOwAGPpt8Dc3mPdXLyK', // w
-    },
-  ],
-  setUsers: function (data) {
-    this.users = data;
-  },
-};
+const usersDB = require('../db/users');
 
 const jwt = require('jsonwebtoken');
 // const dotenv = require('dotenv').config();
@@ -76,4 +56,4 @@ const handleLogin = async (req, res) => {
   }
 };
 
-module.exports = { handleLogin, usersDB };
+module.exports = { handleLogin };

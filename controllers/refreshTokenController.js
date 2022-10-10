@@ -1,4 +1,4 @@
-const { usersDB } = require('./authController');
+const usersDB = require('../db/users');
 
 const jwt = require('jsonwebtoken');
 // const dotenv = require('dotenv').config();
