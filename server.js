@@ -1,15 +1,20 @@
+require('dotenv').config(); // Importing on top level to be able to access on all controllers & middleware
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const corsOptions = require('./config/corsOptions');
+const mongoose = require('mongoose');
+const connectDB = require('./config/mongoConnection');
 
 const verifyJWT = require('./middleware/verifyJWT');
 const errorHandler = require('./middleware/errorHandler');
 const PORT = process.env.PORT || 3500;
 
 const app = express();
+
+connectDB();
 
 app.use(morgan('combined'));
 
@@ -29,7 +34,7 @@ app.use(cookieParser());
 // default dir for static is "/". If we need subdir statics, we need to add that route
 app.use('/', express.static(path.join(__dirname, '/public')));
 
-app.use('/', require('./routes/index'));
+// app.use('/', require('./routes/index'));
 app.use('/register', require('./routes/api/register'));
 app.use('/auth', require('./routes/api/auth'));
 app.use('/refresh', require('./routes/api/refresh'));
@@ -54,4 +59,7 @@ app.all('*', (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => console.log(`Server up on PORT: ${PORT}`));
+mongoose.connection.once('open', () => {
+  console.log('DB Connected!');
+  app.listen(PORT, () => console.log(`Server up on PORT: ${PORT}`));
+});
