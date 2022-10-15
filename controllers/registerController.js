@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
-const usersDB = require('../db/users');
+const User = require('../models/User');
+// const usersDB = require('../db/users');
 
 const handleNewUser = async (req, res) => {
   const { user, password } = req.body;
@@ -10,7 +11,8 @@ const handleNewUser = async (req, res) => {
       .json({ message: 'Username and password are required!' });
   }
 
-  const duplicateUser = usersDB.users.find((usr) => usr.username === user);
+  // Need to add exec() at the end of .findOne, because we use await
+  const duplicateUser = await User.findOne({ username: user }).exec();
 
   // TODO: Check if username already exists in DB
   if (duplicateUser) {
@@ -19,15 +21,12 @@ const handleNewUser = async (req, res) => {
 
   try {
     const hashedPwd = await bcrypt.hash(password, 10);
-    const newUser = {
+
+    await User.create({
       username: user,
       password: hashedPwd,
-      roles: { user: 2001 },
-    };
+    });
 
-    usersDB.setUsers([...usersDB.users, newUser]);
-
-    // TODO: store newUser in DB
     res
       .status(201)
       .json({ status: `New user created with username of ${user}` });
