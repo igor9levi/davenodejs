@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
+
 const User = require('../models/User');
-// const usersDB = require('../db/users');
 
 const handleNewUser = async (req, res) => {
   const { user, password } = req.body;

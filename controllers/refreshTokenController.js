@@ -1,10 +1,8 @@
-const usersDB = require('../db/users');
-
 const jwt = require('jsonwebtoken');
-// const dotenv = require('dotenv').config();
-// const path = require('path');
 
-const handleRefreshToken = (req, res) => {
+const User = require('../models/User');
+
+const handleRefreshToken = async (req, res) => {
   const cookies = req.cookies;
 
   if (!cookies?.jwt) {
@@ -13,13 +11,10 @@ const handleRefreshToken = (req, res) => {
 
   const refreshToken = cookies.jwt;
 
-  //TODO: find user in DB
-  const foundUser = usersDB.users.find(
-    (usr) => usr.refreshToken === refreshToken
-  );
+  const foundUser = await User.findOne({ refreshToken }).exec();
 
   if (!foundUser) {
-    return res.sendStatus(401); // Not Authorized
+    return res.sendStatus(403); // Forbidden
   }
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN, (err, decoded) => {
@@ -39,4 +34,4 @@ const handleRefreshToken = (req, res) => {
   });
 };
 
-module.exports = { handleRefreshToken, usersDB };
+module.exports = { handleRefreshToken };

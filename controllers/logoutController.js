@@ -1,7 +1,7 @@
-const usersDB = require('../db/users');
+const User = require('../models/User');
 
-const handleLogout = (req, res) => {
-  // TODO: on client delete AT
+const handleLogout = async (req, res) => {
+  // TODO: on client also delete AT
   const cookies = req.cookies;
 
   if (!cookies?.jwt) {
@@ -11,9 +11,7 @@ const handleLogout = (req, res) => {
   const refreshToken = cookies.jwt;
 
   // Is RT user in DB
-  const foundUser = usersDB.users.find(
-    (usr) => usr.refreshToken === refreshToken
-  );
+  const foundUser = await User.findOne({ refreshToken }).exec();
 
   if (!foundUser) {
     res.clearCookie('jwt', {
@@ -25,11 +23,8 @@ const handleLogout = (req, res) => {
     return res.sendStatus(204);
   }
 
-  const otherUsers = usersDB.users.filter(
-    (usr) => usr.refreshToken !== refreshToken
-  );
-  const currentUser = { ...foundUser, refreshToken: '' };
-  usersDB.setUsers([...otherUsers, currentUser]);
+  foundUser.refreshToken = '';
+  await foundUser.save();
 
   res.clearCookie('jwt', {
     httpOnly: true,
@@ -40,4 +35,4 @@ const handleLogout = (req, res) => {
   res.sendStatus(204);
 };
 
-module.exports = { handleLogout, usersDB };
+module.exports = { handleLogout };

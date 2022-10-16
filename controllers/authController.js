@@ -1,10 +1,7 @@
 const bcrypt = require('bcrypt');
-
-const usersDB = require('../db/users');
-
 const jwt = require('jsonwebtoken');
-// const dotenv = require('dotenv').config();
-// const path = require('path');
+
+const User = require('../models/User');
 
 const handleLogin = async (req, res) => {
   const { user, password } = req.body;
@@ -15,8 +12,7 @@ const handleLogin = async (req, res) => {
       .json({ message: 'Username and password are required!' });
   }
 
-  //TODO: find user in DB
-  const foundUser = usersDB.users.find((usr) => usr.username === user);
+  const foundUser = await User.findOne({ username: user }).exec();
 
   if (!foundUser) {
     return res.sendStatus(403); // Forbidden
@@ -28,7 +24,7 @@ const handleLogin = async (req, res) => {
   if (match) {
     const roles = Object.values(foundUser.roles);
 
-    // TODO: Create JWTa (AT & RT)
+    // Create JWTa (AT & RT)
     const accessToken = jwt.sign(
       { userInfo: { username: foundUser.username, roles } },
       process.env.ACCESS_TOKEN,
@@ -42,9 +38,8 @@ const handleLogin = async (req, res) => {
     );
 
     // TODO: Save RT to DB and create /logout route to invalidate it and for cross-reference
-    const otherUsers = usersDB.users.filter((usr) => usr.username !== user);
-    const currentUser = { ...foundUser, refreshToken };
-    usersDB.setUsers([...otherUsers, currentUser]);
+    foundUser.refreshToken = refreshToken;
+    await foundUser.save();
 
     res.cookie('jwt', refreshToken, {
       httpOnly: true,
