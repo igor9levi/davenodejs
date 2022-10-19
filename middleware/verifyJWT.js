@@ -5,7 +5,7 @@ const verifyJWT = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
-    res.sendStatus(401);
+    res.sendStatus(401); // Unauthorized - client provides no credentials or invalid credentials
   }
 
   const token = authHeader.split(' ')[1];

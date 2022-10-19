@@ -1,7 +1,7 @@
 const verifyRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req?.roles) {
-      return res.sendStatus(401); // Not authorised
+      return res.sendStatus(401); // Unauthorised - client provides no credentials or invalid credentials
     }
     const rollesArray = [...allowedRoles];
     const isRoleAcceptable = req.roles
@@ -9,7 +9,7 @@ const verifyRoles = (...allowedRoles) => {
       .find((value) => value === true);
 
     if (!isRoleAcceptable) {
-      return res.sendStatus(401); // Not Authorized
+      return res.sendStatus(401); // UnAuthorized - client provides no credentials or invalid credentials
     }
     next();
   };
