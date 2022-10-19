@@ -23,7 +23,10 @@ const handleLogout = async (req, res) => {
     return res.sendStatus(204);
   }
 
-  foundUser.refreshToken = '';
+  // Delete RT from DB
+  foundUser.refreshToken = foundUser.refreshToken.filter(
+    (token) => token !== refreshToken
+  );
   await foundUser.save();
 
   res.clearCookie('jwt', {
