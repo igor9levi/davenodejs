@@ -4,6 +4,12 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const handleLogin = async (req, res) => {
+  /**
+   * We might have a cookie when we try to login e.g.
+   *    1. RT expires
+   *    2. We go to login without loging out
+   *    3. We still have cookie with JWT & RT set
+   * */
   const cookies = req.cookies;
   const { user, password } = req.body;
 
@@ -38,12 +44,26 @@ const handleLogin = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    const newRefreshTokenArray = !cookies.jwt
+    let newRefreshTokenArray = !cookies.jwt
       ? foundUser.refreshToken // If no token in cookies, use only RTs from DB and no old RT do delete from DB
       : foundUser.refreshToken.filter((rt) => rt !== cookies.jwt); // If RT exists in cookie remove it from DB
 
     // If recieved cookie in auth controller, delete it
     if (cookies?.jwt) {
+      /**
+       *  Scenario 3:
+       *    1. User logs but never uses RT & does not logout
+       *    2. RT stolen
+       *    3. If 1 & 2 add reuse detection is needed to clear all RTs when user logs in
+       */
+      const refreshToken = cookies.jwt;
+      const foundToken = await User.findOne({ refreshToken }).exec();
+
+      // Detect refresh token reuse because if User hasn't used his RT, RT should be in an array
+      if (!foundToken) {
+        newRefreshTokenArray = [];
+      }
+
       res.clearCookie('jwt', {
         httpOnly: true,
         sameSite: 'None',
@@ -52,7 +72,7 @@ const handleLogin = async (req, res) => {
     }
 
     // TODO: Save RT to DB and create /logout route to invalidate it and for cross-reference
-    foundUser.refreshToken = [...newRefreshTokenArray, newRefreshToken];
+    foundUser.refreshToken = [...newRefreshTokenArray, newRefreshToken]; // In case scenario 3 we're deleting other tokens WITH Hacked token, and issue new one with this login
     await foundUser.save();
 
     res.cookie('jwt', newRefreshToken, {
